@@ -50,21 +50,31 @@ async def get_db() -> asyncpg.Connection:
     return db_pool.acquire()
 
 
-async def execute_query(query: str, *args) -> str:
+
+async def execute_query(query: str, *args) -> Optional[str]:
+    if db_pool is None:
+        logger.warning("DB not available, skipping query")
+        return None
     async with db_pool.acquire() as conn:
         return await conn.execute(query, *args)
 
 
 async def fetch_one(query: str, *args) -> Optional[asyncpg.Record]:
+    if db_pool is None:
+        return None
     async with db_pool.acquire() as conn:
         return await conn.fetchrow(query, *args)
 
 
 async def fetch_all(query: str, *args) -> list:
+    if db_pool is None:
+        return []
     async with db_pool.acquire() as conn:
         return await conn.fetch(query, *args)
 
 
 async def fetch_value(query: str, *args):
+    if db_pool is None:
+        return None
     async with db_pool.acquire() as conn:
         return await conn.fetchval(query, *args)

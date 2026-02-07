@@ -72,6 +72,8 @@ async def root():
 
 @router.post("/api/v1/auth/register", response_model=TokenResponse, tags=["Auth"])
 async def register(user: UserCreate):
+    if database.db_pool is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database connection unavailable")
     try:
         async with database.db_pool.acquire() as conn:
             existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", user.email)
@@ -97,6 +99,8 @@ async def register(user: UserCreate):
 
 @router.post("/api/v1/auth/login", response_model=TokenResponse, tags=["Auth"])
 async def login(credentials: UserLogin):
+    if database.db_pool is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database connection unavailable")
     async with database.db_pool.acquire() as conn:
         user = await conn.fetchrow(
             "SELECT id, email, password_hash FROM users WHERE email = $1",
