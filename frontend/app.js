@@ -1,5 +1,5 @@
-const API_BASE = 'http://localhost:8000';
-const WS_BASE = 'ws://localhost:8000';
+const API_BASE = 'https://scamsense-60h2.onrender.com';
+const WS_BASE = 'wss://scamsense-60h2.onrender.com';
 
 
 const mouse = { x: null, y: null, radius: 150 };
