@@ -16,8 +16,11 @@ async def init_postgres() -> asyncpg.Pool:
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE
         
+        # asyncpg requires "postgresql://", but some providers give "postgres://"
+        db_url = settings.DATABASE_URL.replace("postgres://", "postgresql://")
+        
         db_pool = await asyncpg.create_pool(
-            settings.DATABASE_URL,
+            db_url,
             min_size=settings.DB_POOL_MIN_SIZE,
             max_size=settings.DB_POOL_MAX_SIZE,
             command_timeout=60,
