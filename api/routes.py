@@ -232,3 +232,61 @@ async def report_scam(report: ScamReport, current_user: dict = Depends(get_curre
         )
     logger.info(f"Scam reported by {user_id}: {report.sender}")
     return {"status": "reported", "sender": report.sender}
+
+
+@router.get("/api/health/diagnose-db", tags=["Health"])
+async def diagnose_db():
+    import os
+    import asyncpg
+    import ssl
+    
+    # 1. Check raw env var
+    raw_env_url = os.environ.get("DATABASE_URL", "NOT_SET")
+    
+    # 2. Check pydantic loaded url
+    loaded_url = settings.DATABASE_URL
+    
+    # Masking helper
+    def mask_url(url):
+        if not url or url == "NOT_SET": return url
+        try:
+            if "@" in url:
+                part1 = url.split("@")[0]
+                part2 = url.split("@")[1]
+                if ":" in part1:
+                     user = part1.split(":")[0]
+                     return f"{user}:****@{part2}"
+                return f"****@{part2}"
+            return url[:15] + "..."
+        except:
+            return "formatting_error"
+
+    report = {
+        "env_var_present": raw_env_url != "NOT_SET",
+        "env_var_masked": mask_url(raw_env_url),
+        "settings_url_masked": mask_url(loaded_url),
+        "connection_attempt": "pending",
+        "error": None
+    }
+    
+    # 3. Attempt Connection
+    try:
+        real_url = loaded_url.replace("postgres://", "postgresql://")
+        
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        
+        conn = await asyncpg.connect(real_url, ssl=ctx, statement_cache_size=0, timeout=10)
+        version = await conn.fetchval("SELECT version()")
+        await conn.close()
+        
+        report["connection_attempt"] = "SUCCESS"
+        report["db_version"] = version
+        
+    except Exception as e:
+        report["connection_attempt"] = "FAILED"
+        report["error"] = str(e)
+        report["error_type"] = type(e).__name__
+        
+    return report
