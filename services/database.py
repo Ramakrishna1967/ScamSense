@@ -19,6 +19,9 @@ async def init_postgres() -> asyncpg.Pool:
         # asyncpg requires "postgresql://", but some providers give "postgres://"
         db_url = settings.DATABASE_URL.replace("postgres://", "postgresql://")
         
+        if "localhost" in db_url and os.environ.get("RENDER"):
+             logger.warning("Attempting to connect to localhost DB in Render environment! This will likely fail.")
+        
         db_pool = await asyncpg.create_pool(
             db_url,
             min_size=settings.DB_POOL_MIN_SIZE,

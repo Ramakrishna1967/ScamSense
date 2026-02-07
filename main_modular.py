@@ -23,6 +23,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger("scamshield")
 
 
+@app.get("/")
+async def root():
+    logger.info("Health check endpoint called")
+    return {"status": "ok", "service": "CortexScan API", "version": settings.APP_VERSION}
+
 def create_scam_detection_workflow() -> StateGraph:
     workflow = StateGraph(AgentState)
     workflow.add_node("watcher", watcher_agent)

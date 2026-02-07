@@ -24,8 +24,8 @@ def init_llm() -> ChatGoogleGenerativeAI:
         logger.info(f"Gemini {settings.GEMINI_MODEL} initialized successfully")
         return llm
     except Exception as e:
-        logger.error(f"Failed to initialize Gemini: {type(e).__name__}: {e}")
-        raise
+        logger.error(f"Failed to initialize Gemini (Continuing without LLM): {type(e).__name__}: {e}")
+        return None
 
 
 def get_llm() -> ChatGoogleGenerativeAI:
