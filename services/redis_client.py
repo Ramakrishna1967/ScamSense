@@ -16,8 +16,8 @@ async def init_redis() -> aioredis.Redis:
         logger.info("Redis connected")
         return redis_client
     except Exception as e:
-        logger.error(f"Redis connection failed: {e}")
-        raise
+        logger.error(f"Redis connection failed (Continuing without Redis): {e}")
+        return None
 
 
 async def close_redis():

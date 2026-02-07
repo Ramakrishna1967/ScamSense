@@ -29,8 +29,8 @@ async def init_elasticsearch() -> AsyncElasticsearch:
         logger.info(f"Elasticsearch connected: v{info['version']['number']}")
         return es_client
     except Exception as e:
-        logger.error(f"Elasticsearch connection failed: {e}")
-        raise
+        logger.error(f"Elasticsearch connection failed (Continuing without ES): {e}")
+        return None
 
 
 async def close_elasticsearch():
