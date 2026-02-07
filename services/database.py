@@ -32,8 +32,8 @@ async def init_postgres() -> asyncpg.Pool:
         logger.info("PostgreSQL connection pool created")
         return db_pool
     except Exception as e:
-        logger.error(f"PostgreSQL connection failed: {e}")
-        raise
+        logger.error(f"PostgreSQL connection failed (Continuing without DB): {e}")
+        return None
 
 
 async def close_postgres():
