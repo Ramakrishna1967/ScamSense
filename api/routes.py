@@ -239,6 +239,7 @@ async def diagnose_db():
     import os
     import asyncpg
     import ssl
+    import socket
     
     # 1. Check raw env var
     raw_env_url = os.environ.get("DATABASE_URL", "NOT_SET")
@@ -266,24 +267,72 @@ async def diagnose_db():
         "env_var_masked": mask_url(raw_env_url),
         "settings_url_masked": mask_url(loaded_url),
         "connection_attempt": "pending",
+        "dns_resolution": None,
+        "ipv4_address": None,
+        "ipv6_address": None,
+        "socket_connect_test": None,
         "error": None
     }
     
-    # 3. Attempt Connection
+    # 3. Resolve Hostname (Force IPv4)
     try:
+        # Extract host and port
         real_url = loaded_url.replace("postgres://", "postgresql://")
+        from urllib.parse import urlparse
+        parsed = urlparse(real_url)
+        hostname = parsed.hostname
+        port = parsed.port or 5432
         
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+        report["hostname"] = hostname
+        report["port"] = port
         
-        conn = await asyncpg.connect(real_url, ssl=ctx, statement_cache_size=0, timeout=10)
-        version = await conn.fetchval("SELECT version()")
-        await conn.close()
+        # Resolve IPv4
+        try:
+            ipv4 = socket.gethostbyname(hostname)
+            report["ipv4_address"] = ipv4
+        except Exception as e:
+            report["ipv4_resolution_error"] = str(e)
+
+        # Resolve IPv6 (Check if available)
+        try:
+            addr_info = socket.getaddrinfo(hostname, port, socket.AF_INET6)
+            if addr_info:
+                report["ipv6_address"] = addr_info[0][4][0]
+        except Exception:
+            report["ipv6_address"] = "Not Resolved"
+            
+        # Socket Connect Test (IPv4)
+        if report.get("ipv4_address"):
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                sock.connect((report["ipv4_address"], port))
+                sock.close()
+                report["socket_connect_test"] = "SUCCESS (IPv4)"
+            except Exception as e:
+                report["socket_connect_test"] = f"FAILED: {e}"
         
-        report["connection_attempt"] = "SUCCESS"
-        report["db_version"] = version
-        
+        # 4. Attempt Connection (Using IPv4 IP if available)
+        if report.get("ipv4_address"):
+            # Replace hostname with IP in connection string to skip DNS
+            # But asyncpg verifies SSL hostname, so we disable verify.
+            # We must reconstruct the URL carefully or pass `host` param.
+            
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            
+            # Using connect with explicit host/port to prefer IPv4 if url allows...
+            # Actually easier to just replace host in string
+            forced_ip_url = real_url.replace(hostname, report["ipv4_address"])
+            
+            conn = await asyncpg.connect(forced_ip_url, ssl=ctx, statement_cache_size=0, timeout=10)
+            version = await conn.fetchval("SELECT version()")
+            await conn.close()
+            
+            report["connection_attempt"] = "SUCCESS (Forced IPv4)"
+            report["db_version"] = version
+
     except Exception as e:
         report["connection_attempt"] = "FAILED"
         report["error"] = str(e)
