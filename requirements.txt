@@ -1,7 +1,9 @@
 fastapi
 uvicorn[standard]
+gunicorn
 langgraph
 langchain
+langchain-community
 langchain-core
 langchain-google-genai
 google-generativeai
