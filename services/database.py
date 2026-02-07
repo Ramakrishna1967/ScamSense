@@ -27,6 +27,7 @@ async def init_postgres() -> asyncpg.Pool:
             min_size=settings.DB_POOL_MIN_SIZE,
             max_size=settings.DB_POOL_MAX_SIZE,
             command_timeout=60,
+            statement_cache_size=0,
             ssl=ssl_context
         )
         logger.info("PostgreSQL connection pool created")
