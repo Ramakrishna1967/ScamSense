@@ -1,6 +1,6 @@
 # ScamSense
 
-camSense is an advanced, real-time scam detection platform that protects users from fraudulent messages (SMS, Email, WhatsApp). It uses a multi-agent AI system powered by Google Gemini (LLM) and a keyword-based fallback engine to analyze messages for urgency, threats, and suspicious patterns
+ScamSense is an advanced, real-time scam detection platform that protects users from fraudulent messages (SMS, Email, WhatsApp). It uses a multi-agent AI system powered by Google Gemini (LLM) and a keyword-based fallback engine to analyze messages for urgency, threats, and suspicious patterns
 
 
 ## Project Structure
