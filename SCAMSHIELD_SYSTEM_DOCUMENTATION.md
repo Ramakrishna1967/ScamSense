@@ -1,65 +1,8 @@
-# ScamShield
+# 🛡️ ScamShield System Documentation
 
-Multi-Agent AI Scam Detection System using FastAPI, LangGraph, Google Gemini 1.5 Pro, Elasticsearch, PostgreSQL, and Redis.
-
-## Project Structure
-
-```
-scamshield/
-├── main.py                 # All-in-one version
-├── main_modular.py         # Modular version
-├── requirements.txt
-├── .env.example
-├── config/                 # Settings
-├── models/                 # Pydantic models
-├── services/               # Database clients
-├── agents/                 # LangGraph agents
-├── api/                    # FastAPI routes
-├── scripts/                # Setup scripts
-├── frontend/               # Dashboard
-└── tests/                  # Test files
-```
-
-## Quick Start
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-python scripts/init_database.py
-python scripts/init_elasticsearch.py
-python main.py
-```
-
-## Agent Pipeline
-
-Watcher -> Analyzer -> Pattern -> Alerter -> Blocker
-
-## API Endpoints
-
-- POST /api/v1/auth/register
-- POST /api/v1/auth/login
-- POST /api/v1/analyze
-- GET /api/v1/scams
-- GET /api/v1/stats
-- POST /api/v1/report
-- WS /ws/{user_id}
-
-## Environment Variables
-
-```
-GEMINI_API_KEY=AIza...
-DATABASE_URL=postgresql://...
-ES_CLOUD_ID=...
-ES_API_KEY=...
-REDIS_URL=redis://...
-JWT_SECRET=...
-```
+An in-depth technical overview of the ScamShield system, featuring architecture diagrams, data flows, and component breakdowns.
 
 ---
-
-# 🛡️ System Architecture & Documentation
 
 ## 1. High-Level Architecture
 
@@ -78,11 +21,11 @@ flowchart TD
     end
     
     subgraph AIAgentLayer ["AI Agent Layer"]
-        Orchestrator --> Watcher["👁️ Watcher Agent"]
-        Orchestrator --> Analyzer["🧠 Analyzer Agent (Gemini 1.5 Pro)"]
-        Orchestrator --> Pattern["📊 Pattern Agent"]
-        Orchestrator --> Alerter["🚨 Alerter Agent"]
-        Orchestrator --> Blocker["🛡️ Blocker Agent"]
+        Orchestrator --> Watcher["eye_icon Watcher Agent"]
+        Orchestrator --> Analyzer["brain_icon Analyzer Agent (Gemini 1.5 Pro)"]
+        Orchestrator --> Pattern["chart_icon Pattern Agent"]
+        Orchestrator --> Alerter["siren_icon Alerter Agent"]
+        Orchestrator --> Blocker["shield_icon Blocker Agent"]
         
         Analyzer -.-> Gemini["Google Gemini API"]
     end
@@ -100,9 +43,13 @@ flowchart TD
     style DataLayer fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
 ```
 
+---
+
 ## 2. The Analysis Workflow (Sequence Diagram)
 
-This diagram shows exactly what happens when a user receives a suspicious message. The entire process completes in **under 2 seconds**.
+This diagram shows exactly### ⚡ Why FastAPI?
+We need **asynchronous** processing to handle thousands of messages per second without blocking. Python's `asyncio` combined with FastAPI gives us Node.js-like concurrency with Python's AI ecosystem (Google Generative AI SDK, LangChain).
+The entire process completes in **under 2 seconds**.
 
 ```mermaid
 sequenceDiagram
@@ -143,7 +90,103 @@ sequenceDiagram
     API-->>User: 9. JSON Response (Risk, Analysis, Actions)
 ```
 
-## 3. Deployment Topology
+---
+
+## 3. Database Schema (Entity Relationship)
+
+ScamShield uses **PostgreSQL** for relational data (users, settings) and **Elasticsearch** for unstructured data and vector search.
+
+```mermaid
+erDiagram
+    Users ||--o{ UserSettings : has
+    Users ||--o{ UserBlocklist : manages
+    Users ||--o{ TrustedContacts : defines
+    
+    Users {
+        uuid id PK
+        string email
+        string password_hash
+        timestamp created_at
+    }
+    
+    UserSettings {
+        uuid user_id FK
+        boolean enable_ai_scanning
+        boolean auto_block_high_risk
+        boolean family_alerts_enabled
+        int sensitivity_level
+    }
+    
+    UserBlocklist {
+        uuid id PK
+        uuid user_id FK
+        string blocked_identifier
+        string reason
+        float risk_score
+        timestamp blocked_at
+    }
+    
+    TrustedContacts {
+        uuid id PK
+        uuid user_id FK
+        string name
+        string email
+        string relation
+    }
+```
+
+---
+
+## 4. Agent State Machine (LangGraph)
+
+The AI logic isn't just a straight line; it's a state machine that can loop or branch based on findings.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Watcher: New Message
+    
+    state Watcher {
+        ExtactMetadata
+        CheckURLs
+    }
+    
+    Watcher --> Router
+    
+    Router --> QuickPass: Trusted Sender?
+    Router --> Analyzer: Unknown Sender
+    
+    state Analyzer {
+        Gemini_Analysis
+        DetectUrgency
+        ScoreRisk
+    }
+    
+    Analyzer --> PatternMatcher
+    
+    state PatternMatcher {
+        CheckBlacklist
+        VectorSearchSimilarScams
+    }
+    
+    PatternMatcher --> DecisionEngine
+    
+    state DecisionEngine {
+        CalculateFinalConfidence
+    }
+    
+    DecisionEngine --> Blocker: Risk > 85%
+    DecisionEngine --> Alerter: Risk > 50%
+    DecisionEngine --> Logger: Risk < 50%
+    
+    Blocker --> Alerter: Block & Notify
+    Alerter --> [*]: Alert Sent
+    Logger --> [*]: Logged
+    QuickPass --> [*]: Allowed
+```
+
+---
+
+## 5. Deployment Topology
 
 How the system is actually hosted and connected online.
 
@@ -182,3 +225,6 @@ flowchart LR
     PythonServer -->|HTTPS| Elastic
 ```
 
+---
+
+**Generated by Antigravity for ScamShield**
