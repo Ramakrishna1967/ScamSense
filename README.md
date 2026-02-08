@@ -1,4 +1,4 @@
-# ScamShield
+# ScamSense
 
 Multi-Agent AI Scam Detection System using FastAPI, LangGraph, Google Gemini 1.5 Pro, Elasticsearch, PostgreSQL, and Redis.
 
