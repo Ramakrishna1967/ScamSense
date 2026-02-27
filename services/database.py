@@ -1,4 +1,5 @@
 import logging
+import os
 import ssl
 from typing import Optional
 import asyncpg
