@@ -184,6 +184,9 @@ function setupEventListeners() {
     elements.registerForm.onsubmit = handleRegister;
     elements.testForm.onsubmit = handleAnalysis;
 
+    // Demo button
+    document.getElementById('demo-btn').onclick = handleDemoLogin;
+
     // Logout
     document.getElementById('logout-btn').onclick = logout;
 
@@ -259,6 +262,22 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     }
 
     return response.json();
+}
+
+async function handleDemoLogin() {
+    const btn = document.getElementById('demo-btn');
+    btn.innerText = '⚡ Loading Demo...';
+    btn.disabled = true;
+    try {
+        const data = await apiCall('/api/v1/demo-login', 'POST');
+        saveSession(data.access_token);
+        await showDashboard();
+    } catch (err) {
+        alert('Demo login failed: ' + err.message);
+    } finally {
+        btn.innerText = '⚡ Try Demo (No Login Required)';
+        btn.disabled = false;
+    }
 }
 
 async function handleLogin(e) {

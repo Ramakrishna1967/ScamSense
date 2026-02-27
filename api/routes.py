@@ -70,6 +70,16 @@ async def root():
     }
 
 
+DEMO_USER_ID = "00000000-0000-0000-0000-000000000001"
+
+@router.post("/api/v1/demo-login", response_model=TokenResponse, tags=["Auth"])
+async def demo_login():
+    """Demo login - no database required. For hackathon demos."""
+    token = create_access_token({"sub": DEMO_USER_ID, "email": "demo@scamsense.ai"})
+    logger.info("Demo login used")
+    return TokenResponse(access_token=token)
+
+
 @router.post("/api/v1/auth/register", response_model=TokenResponse, tags=["Auth"])
 async def register(user: UserCreate):
     if database.db_pool is None:
